@@ -8,6 +8,8 @@
   <meta name="description" content="100% free offline file converter. No upload Works without internet">
   <style>
     :root{--p:#1e40af;--t:#16a34a;--bg:#f9fafb}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:#111;line-height:1.6}.dark{background:#111;color:#eee}#c{max-width:960px;margin:auto;padding:20px}#d{border:4px dashed var(--p);padding:80px 20px;border-radius:20px;text-align:center;background:#fff;margin:40px 0}button{background:var(--p);color:#fff;border:none;padding:16px 36px;border-radius:12px;font-size:19px;cursor:pointer;margin:10px}#s{margin-top:20px;font-weight:bold}.ad-free .adsbygoogle{display:none}#q{margin-top:30px}
+  #q { margin: 30px 0 0 0; padding: 0 20px; }
+#d { margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -75,12 +77,12 @@ async function processFiles(files) {
   if (files.length > maxFiles) return alert(`Max ${maxFiles} files (Turbo = 10)`);
 
   const q = document.getElementById('q');
-  q.innerHTML = '<h3>Conversion Queue</h3>';
+  q.innerHTML = ''; // cleared
 
   for (const file of files) {
     const div = document.createElement('div');
-    div.style = 'background:#fff;padding:16px;margin:12px 0;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08)';
-    div.innerHTML = `<strong>${file.name}</strong> – ready`;
+    div.style = 'background:#fff;padding:16px;margin:12px 0;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-size:15px';
+    div.innerHTML = `<strong>${file.name}</strong>`;
     q.appendChild(div);
 
     const ext = file.name.split('.').pop().toLowerCase();
@@ -90,22 +92,28 @@ async function processFiles(files) {
     if (['heic','heif'].includes(ext)) options.push('jpg','png');
     if (['jpg','jpeg','png','webp','gif','bmp'].includes(ext)) options.push('png','jpg','webp');
 
-    if (options.length === 0) { div.innerHTML += '<br><em>Coming soon</em>'; continue; }
+    if (options.length === 0) {
+      div.innerHTML += '<br><em style="color:#666">No conversion available yet</em>';
+      continue;
+    }
 
     const sel = document.createElement('select');
-    sel.innerHTML = '<option value="">Choose format →</option>';
-    options.forEach(o => sel.innerHTML += `<option value="\( {o}"> \){o.toUpperCase()}</option>`);
-    div.appendChild(document.createElement('br'));
+    sel.innerHTML = '<option value="" disabled selected>Select output format →</option>';
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o;
+      opt.textContent = o.toUpperCase();
+      sel.appendChild(opt);
+    });
     div.appendChild(sel);
 
     sel.onchange = async () => {
       const target = sel.value;
-      div.innerHTML = `<strong>\( {file.name}</strong> → \){target.toUpperCase()} – working…`;
+      div.innerHTML = `<strong>\( {file.name}</strong> → \){target.toUpperCase()} – converting…`;
       let blob;
 
-      if ((ext === 'heic' || ext === 'heif') && (target === 'jpg' || target === 'png')) {
+      if ((ext === 'heic' || ext === 'heif')) {
         blob = await heic2any({ blob: file, toType: target === 'jpg' ? 'image/jpeg' : 'image/png' });
-
       } else if (ext === 'pdf' && target === 'png') {
         const arr = await file.arrayBuffer();
         const pdf = await PDFLib.PDFDocument.load(arr);
@@ -115,8 +123,7 @@ async function processFiles(files) {
         canvas.width = viewport.width; canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
         blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-
-      } else if (['png','jpg','webp'].includes(target)) {
+      } else {
         const img = new Image();
         img.src = URL.createObjectURL(file);
         await new Promise(r => img.onload = r);
@@ -130,7 +137,7 @@ async function processFiles(files) {
       const a = document.createElement('a');
       a.href = url;
       a.download = file.name.replace(/\.[^/.]+$/, '') + '.' + target;
-      a.textContent = `Download ${target.toUpperCase()}`;
+      a.textContent = `Download ${target.toUpperCase()} ✓`;
       a.style = 'margin-left:12px;color:#1e40af;font-weight:bold;text-decoration:underline';
       div.appendChild(document.createElement('br'));
       div.appendChild(a);
