@@ -35,7 +35,6 @@
 
     <div style="margin-top:40px">
       <a href="https://buymeacoffee.com/securefileforge" target="_blank">Buy Me a Coffee</a> • 
-      <button class="tb" onclick="goTurbo()">Turbo $3/month</button>
     </div>
   </div>
   <div id="q"></div>
@@ -44,26 +43,12 @@
 <!-- STABLE LIBRARIES (desktop/mobile tested) -->
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-const stripe = Stripe('pk_live_51SZJyX64bNH1a5Q2L9qCekIfq8SO7fpYKresBHbi2w9ZMyM9ntevr0S9ZNCEdUfphXrEyMZEm2XO5Msi1WoD1QIL006EVFbdgn'); // Replace
 
 let turbo = localStorage.getItem('sff_turbo') === 'active';
 let max = turbo ? 10 : 1;
 document.getElementById('s').innerHTML = turbo ? '<span style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:20px">Turbo Active – Up to 10 files</span>' : 'Free – 1 file at a time';
 if (turbo) document.body.classList.add('ad-free');
-
-function goTurbo() {
-  stripe.redirectToCheckout({
-    lineItems: [{ price: 'price_1SZN7q64bNH1a5Q2Yrz45bmX', quantity: 1 }],
-    mode: 'subscription',
-    successUrl: window.location.href,
-    cancelUrl: window.location.href
-  }).catch(err => {
-    alert('Stripe error – check your Price ID and Live key');
-    console.error(err);
-  });
-}
 
 document.getElementById('f').onchange = e => processFiles(e.target.files);
 document.getElementById('d').addEventListener('drop', e => {e.preventDefault(); processFiles(e.dataTransfer.files);});
