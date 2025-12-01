@@ -58,6 +58,11 @@ function goTurbo() {
 }
 
 function handleFiles(files) {
+  if (typeof fileConverter === 'undefined') {
+    alert('Library loading... Please wait 10 seconds and try again.');
+    setTimeout(() => handleFiles(files), 10000);
+    return;
+  }
   if (files.length > max) return alert('Max ' + max + ' files in ' + (turbo ? 'Turbo' : 'Free') + ' mode');
   const q = document.getElementById('q');
   q.innerHTML = '<h3>Conversion Queue</h3>';
@@ -92,6 +97,7 @@ function handleFiles(files) {
     }, i * 500);
   });
 }
+
 
 document.getElementById('f').onchange = e => handleFiles(e.target.files);
 document.getElementById('d').addEventListener('drop', e => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
