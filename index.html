@@ -40,7 +40,7 @@
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-const stripe = Stripe('pk_test_51SZJz98UuzDsIradTjC3PIITnRkmbwOBSXhXxdNICuePJd9tcRr1YvSvdZuNmf0lP1ixNTeh6xrXJE8L1yDDvEO800GgzTLUl9'); // Replace
+const stripe = Stripe('pk_live_51SZJyX64bNH1a5Q2L9qCekIfq8SO7fpYKresBHbi2w9ZMyM9ntevr0S9ZNCEdUfphXrEyMZEm2XO5Msi1WoD1QIL006EVFbdgn'); // Replace
 
 let turbo = localStorage.getItem('sff_turbo') === 'active';
 let max = turbo ? 10 : 1;
@@ -49,7 +49,7 @@ if (turbo) document.body.classList.add('ad-free');
 
 function goTurbo() {
   stripe.redirectToCheckout({
-    lineItems: [{price: 'price_1SZK2G8UuzDsIradYWr4a2Ne', quantity: 1}],
+    lineItems: [{price: 'price_1SZN7q64bNH1a5Q2Yrz45bmX', quantity: 1}],
     mode: 'subscription',
     successUrl: location.href,
     cancelUrl: location.href
