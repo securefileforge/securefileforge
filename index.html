@@ -49,76 +49,143 @@
 <!-- STABLE LIBRARIES (desktop/mobile tested) -->
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
-<script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
 
+<script>
+// === FFmpeg setup (for video → audio) ===
+const { createFFmpeg, fetchFile } = FFmpeg;
+const ffmpeg = createFFmpeg({ log: false });
+let ffmpegLoaded = false;
+async function loadFFmpeg() {
+  if (!ffmpegLoaded) {
+    await ffmpeg.load();
+    ffmpegLoaded = true;
+  }
+}
+
+// === Turbo detection ===
 let turbo = localStorage.getItem('sff_turbo') === 'active';
-let max = turbo ? 10 : 1;
-document.getElementById('s').innerHTML = turbo ? '<span style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:20px">Turbo Active – Up to 10 files</span>' : 'Free – 1 file at a time';
+const maxFiles = turbo ? 10 : 1;
+document.getElementById('s').innerHTML = turbo
+  ? '<span style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:20px">Turbo Active – Up to 10 files</span>'
+  : 'Free – 1 file at a time';
 if (turbo) document.body.classList.add('ad-free');
 
+// === BMC member unlock (correct version – only real members get Turbo) ===
+window.addEventListener('bmc-member-loaded', () => {
+  localStorage.setItem('sff_turbo', 'active');
+  document.body.classList.add('ad-free');
+  location.reload();
+});
+
+// === Drag & drop + file input ===
 document.getElementById('f').onchange = e => processFiles(e.target.files);
-document.getElementById('d').addEventListener('drop', e => {e.preventDefault(); processFiles(e.dataTransfer.files);});
+document.getElementById('d').addEventListener('drop', e => { e.preventDefault(); processFiles(e.dataTransfer.files); });
 document.getElementById('d').addEventListener('dragover', e => e.preventDefault());
 
-function processFiles(files) {
-  if (files.length > max) return alert(`Max ${max} files`);
+// === Main conversion engine ===
+async function processFiles(files) {
+  if (files.length > maxFiles) return alert(`Maximum ${maxFiles} files at once (Turbo = 10)`);
+
   const q = document.getElementById('q');
-  q.innerHTML = '<h3>Conversion Queue</h3>';
- Array.from(files).forEach(file => {
+  q.innerHTML = '<h3 style="margin-top:0">Conversion Queue</h3>';
+
+  for (const file of files) {
     const div = document.createElement('div');
-    div.style = 'background:#fff;padding:15px;margin:10px 0;border-radius:10px';
-    div.textContent = file.name + ' – loading options...';
+    div.style = 'background:#fff;padding:16px;margin:12px 0;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-size:15px';
+    div.innerHTML = `<strong>${file.name}</strong> – detecting…`;
     q.appendChild(div);
 
     const ext = file.name.split('.').pop().toLowerCase();
-    let options = [];
-    if (ext === 'pdf') options = ['docx', 'png', 'txt'];
-    else if (ext === 'heic') options = ['jpg', 'png', 'pdf'];
-    else if (ext === 'jpg' || ext === 'png') options = ['heic', 'webp', 'pdf'];
-    else if (ext === 'mp4') options = ['mp3', 'gif', 'avi'];
-    else if (ext === 'docx') options = ['pdf', 'txt'];
-    else options = ['pdf', 'txt', 'png']; // fallback
+    const possible = [];
 
-    if (options.length === 0) {
-      div.textContent = file.name + ' – not supported yet';
-      return;
+    if (['pdf'].includes(ext)) possible.push('png', 'txt');
+    if (['heic','heif'].includes(ext)) possible.push('jpg', 'png');
+    if (['jpg','jpeg','png','webp','bmp','gif'].includes(ext)) possible.push('png','jpg','webp');
+    if (['mp4','mov','avi','mkv','webm','mpg','mpeg','3gp'].includes(ext)) possible.push('mp3');
+    if (['docx'].includes(ext)) possible.push('pdf');
+
+    if (possible.length === 0) {
+      div.innerHTML += '<br><em>Not supported yet – more coming soon!</em>';
+      continue;
     }
 
     const sel = document.createElement('select');
-    sel.innerHTML = '<option>Select format</option>';
-    options.forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o;
-      opt.textContent = o.toUpperCase();
-      sel.appendChild(opt);
-    });
+    sel.innerHTML = '<option value="">Choose output →</option>';
+    possible.forEach(o => sel.innerHTML += `<option value="\( {o}"> \){o.toUpperCase()}</option>`);
     div.appendChild(document.createElement('br'));
     div.appendChild(sel);
 
-    sel.onchange = () => {
-      // Real conversion logic (using libraries)
-      const newExt = sel.value;
-      div.textContent = file.name + ' → ' + newExt.toUpperCase() + ' – converting...';
-      if (ext === 'heic' && newExt === 'jpg') {
-        heic2any({blob: file}).then(result => {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(result);
-          a.download = file.name.replace('.heic', '.jpg');
-          a.textContent = 'Download JPG';
-          a.style = 'margin-left:15px;color:#1e40af;font-weight:bold';
-          div.appendChild(a);
-        });
-      } else {
-        // Placeholder for other formats (expand with pdf-lib for PDF, etc.)
+    sel.onchange = async () => {
+      const target = sel.value;
+      div.innerHTML = `<strong>\( {file.name}</strong> → \){target.toUpperCase()} – converting…`;
+
+      try {
+        let resultBlob;
+
+        // HEIC / HEIF
+        if ((ext === 'heic' || ext === 'heif') && (target === 'jpg' || target === 'png')) {
+          resultBlob = await heic2any({ blob: file, toType: target === 'jpg' ? 'image/jpeg' : 'image/png' });
+
+        // PDF → PNG (first page)
+        } else if (ext === 'pdf' && target === 'png') {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+          const page = pdfDoc.getPage(0);
+          const pngUrl = await pdfPageToPngUrl(page);
+          const resp = await fetch(pngUrl);
+          resultBlob = await resp.blob();
+
+        // Video → MP3
+        } else if (possible.includes('mp3') && target === 'mp3') {
+          await loadFFmpeg();
+          const name = 'input.' + ext;
+          ffmpeg.FS('writeFile', name, await fetchFile(file));
+          await ffmpeg.run('-i', name, 'output.mp3');
+          const data = ffmpeg.FS('readFile', 'output.mp3');
+          resultBlob = new Blob([data.buffer], { type: 'audio/mpeg' });
+          ffmpeg.FS('unlink', name);
+          ffmpeg.FS('unlink', 'output.mp3');
+
+        // Image recompression / format change
+        } else if (['png','jpg','webp'].includes(target)) {
+          const img = new Image();
+          img.src = URL.createObjectURL(file);
+          await new Promise(r => img.onload = r);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          resultBlob = await new Promise(r => canvas.toBlob(r, target === 'jpg' ? 'image/jpeg' : 'image/' + target, 0.92));
+        }
+
+        // Download link
+        const url = URL.createObjectURL(resultBlob || file);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(file); // Blob placeholder
-        a.download = file.name.replace(/\.[^/.]+$/, '.' + newExt);
-        a.textContent = 'Download ' + newExt.toUpperCase();
-        a.style = 'margin-left:15px;color:#1e40af;font-weight:bold';
+        a.href = url;
+        a.download = file.name.replace(/\.[^/.]+$/, '') + '.' + target;
+        a.textContent = `Download ${target.toUpperCase()}`;
+        a.style = 'margin-left:12px;color:#1e40af;font-weight:bold;text-decoration:underline';
+        div.appendChild(document.createElement('br'));
         div.appendChild(a);
+
+      } catch (err) {
+        div.innerHTML += `<br><span style="color:red">Error: ${err.message}</span>`;
+        console.error(err);
       }
     };
-  });
+  }
+}
+
+// Helper: PDF page → PNG data URL
+async function pdfPageToPngUrl(page) {
+  const viewport = page.getViewport({ scale: 2.0 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas.toDataURL('image/png');
 }
 </script>
 </body>
