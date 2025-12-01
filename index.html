@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="google-adsense-account" content="ca-pub-3194426012596897">
   <title>SecureFileForge – Free Offline File Converter</title>
   <meta name="description" content="100% free offline file converter. No upload, no limits. Convert PDF, Word, video to MP3, HEIC to JPG, EPUB — works without internet. Turbo $3/mo = ad-free + batch.">
   <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU2VjdXJlRmlsZUZvcmdlIiwic2hvcnRfbmFtZSI6IlNGRiIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsInRoZW1lX2NvbG9yIjoiIzFlNDBhZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3BuZztiYXNlNjQs aVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAAD0eNTAAABGklEQVR42u3BAQ0AAAIwY/j/NK3dAIBAwcMgAAAAAElFTkSuQmCCIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmcifV19">
@@ -22,12 +23,12 @@
   </div>
 
   <div style="text-align:center;margin:60px 0">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1234567890" data-ad-format="auto"></ins>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3194426012596897" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3194426012596897" data-ad-slot="1234567890" data-ad-format="auto"></ins>
     <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
 
     <div style="margin-top:40px">
-      <a href="https://buymeacoffee.com/yourusername" target="_blank">Buy Me a Coffee</a> • 
+      <a href="https://buymeacoffee.com/securefileforge" target="_blank">Buy Me a Coffee</a> • 
       <button class="tb" onclick="goTurbo()">Turbo $3/month</button>
     </div>
   </div>
@@ -39,7 +40,7 @@
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-const stripe = Stripe('pk_live_YOUR_PUBLISHABLE_KEY_HERE'); // Replace
+const stripe = Stripe('pk_test_51SZJz98UuzDsIradTjC3PIITnRkmbwOBSXhXxdNICuePJd9tcRr1YvSvdZuNmf0lP1ixNTeh6xrXJE8L1yDDvEO800GgzTLUl9'); // Replace
 
 let turbo = localStorage.getItem('sff_turbo') === 'active';
 let max = turbo ? 10 : 1;
@@ -48,7 +49,7 @@ if (turbo) document.body.classList.add('ad-free');
 
 function goTurbo() {
   stripe.redirectToCheckout({
-    lineItems: [{price: 'price_YOUR_PRICE_ID_HERE', quantity: 1}],
+    lineItems: [{price: 'price_1SZK2G8UuzDsIradYWr4a2Ne', quantity: 1}],
     mode: 'subscription',
     successUrl: location.href,
     cancelUrl: location.href
