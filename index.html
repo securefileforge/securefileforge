@@ -49,10 +49,13 @@ if (turbo) document.body.classList.add('ad-free');
 
 function goTurbo() {
   stripe.redirectToCheckout({
-    lineItems: [{price: 'price_1SZN7q64bNH1a5Q2Yrz45bmX', quantity: 1}],
+    lineItems: [{ price: 'price_1SZN7q64bNH1a5Q2Yrz45bmX', quantity: 1 }],
     mode: 'subscription',
-    successUrl: location.href,
-    cancelUrl: location.href
+    successUrl: window.location.href,
+    cancelUrl: window.location.href
+  }).catch(err => {
+    alert('Stripe error – check your Price ID and Live key');
+    console.error(err);
   });
 }
 
