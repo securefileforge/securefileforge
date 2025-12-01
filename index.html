@@ -46,7 +46,18 @@
     };
   })();
 </script>
-
+<script>
+// Auto-unlock Turbo for BMC members (conflict-safe)
+(function() {
+  if (window.buymeacoffeeConfig) {
+    window.addEventListener('bmc-member-loaded', function() {
+      localStorage.setItem('sff_turbo', 'active');
+      document.body.classList.add('ad-free');
+      location.reload();
+    });
+  }
+})();
+</script>
 <script>
   window.addEventListener('bmc-member-loaded', function() {
     localStorage.setItem('sff_turbo', 'active');
